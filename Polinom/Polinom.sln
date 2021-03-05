@@ -5,6 +5,8 @@ VisualStudioVersion = 16.0.30717.126
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Polinom", "Polinom\Polinom.vcxproj", "{238E9B1C-CA6B-4B63-B6C9-617D3E77BE2E}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test_polinom", "test_polinom\test_polinom.vcxproj", "{4EC9EE36-E357-4A46-ACA6-B5672322D5C6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -21,6 +23,14 @@ Global
 		{238E9B1C-CA6B-4B63-B6C9-617D3E77BE2E}.Release|x64.Build.0 = Release|x64
 		{238E9B1C-CA6B-4B63-B6C9-617D3E77BE2E}.Release|x86.ActiveCfg = Release|Win32
 		{238E9B1C-CA6B-4B63-B6C9-617D3E77BE2E}.Release|x86.Build.0 = Release|Win32
+		{4EC9EE36-E357-4A46-ACA6-B5672322D5C6}.Debug|x64.ActiveCfg = Debug|x64
+		{4EC9EE36-E357-4A46-ACA6-B5672322D5C6}.Debug|x64.Build.0 = Debug|x64
+		{4EC9EE36-E357-4A46-ACA6-B5672322D5C6}.Debug|x86.ActiveCfg = Debug|Win32
+		{4EC9EE36-E357-4A46-ACA6-B5672322D5C6}.Debug|x86.Build.0 = Debug|Win32
+		{4EC9EE36-E357-4A46-ACA6-B5672322D5C6}.Release|x64.ActiveCfg = Release|x64
+		{4EC9EE36-E357-4A46-ACA6-B5672322D5C6}.Release|x64.Build.0 = Release|x64
+		{4EC9EE36-E357-4A46-ACA6-B5672322D5C6}.Release|x86.ActiveCfg = Release|Win32
+		{4EC9EE36-E357-4A46-ACA6-B5672322D5C6}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

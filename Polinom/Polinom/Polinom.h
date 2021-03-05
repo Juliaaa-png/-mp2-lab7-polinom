@@ -19,6 +19,7 @@ struct TMonom
 	TMonom& operator =(const TMonom& m);
 	TMonom operator *(const TMonom& m);
 	TMonom operator *(const double alpha);
+
 	friend std::istream& operator>>(std::istream& in, TMonom& m)
 	{
 		std::string res;
@@ -181,11 +182,13 @@ TMonom TMonom:: operator *(const double a)
 	return res;
 }
 
+
 template <class T>
 class TList {
 protected:
 	TLink<T>* pFirst, * pLast, * pCurr, * pPrev, * pStop;
 	int size, pos;
+
 public:
 	TList();
 	TList(const TList& list);
@@ -193,15 +196,16 @@ public:
 	void InsFirst(T elem);
 	void InsLast(T elem);
 	void DelFirst();
+	void Reset() { pCurr = pFirst; }
+	bool IsEnd() const { return pCurr == pStop; }
+	void GoNext() { pPrev = pCurr; pCurr = pCurr->pNext; }
 	void DelCurr();
 	void InsCurr(T elem);
-	void Reset();
-	bool IsEnd();
-	void GoNext();
 	int Get_Size()const { return size; }
+
 	friend std::istream& operator >> (std::istream& in, TList<T>& list)
 	{
-		std::cout << "size= ";
+		std::cout << "size=";
 		int t;
 		in >> t;
 		if (t < 0)
@@ -273,15 +277,15 @@ template<class T>
 TList<T>::~TList()
 {
 	pCurr = pPrev = pStop;
-	size = 0;
 	pos = 0;
 	while (pFirst != pStop)
 	{
 		TLink<T>* curr = pFirst->pNext;
 		delete pFirst;
 		pFirst = curr;
+		--size;
 	}
-	pLast = pStop;
+	pFirst = pLast = pStop;
 }
 
 template<class T>
@@ -289,7 +293,7 @@ void TList<T>::InsFirst(T elem)
 {
 	TLink<T>* tmp = new TLink<T>;
 	tmp->val = elem;
-	if (pFirst == pStop)
+	if (size == 0)
 	{
 		tmp->pNext = pStop;
 		pFirst = pLast = tmp;
@@ -308,7 +312,7 @@ void TList<T>::InsLast(T elem)
 	TLink<T>* tmp = new TLink<T>;
 	tmp->val = elem;
 	tmp->pNext = pStop;
-	if (pFirst == pStop)
+	if (size == 0)
 	{
 		pFirst = pLast = tmp;
 	}
@@ -323,7 +327,7 @@ void TList<T>::InsLast(T elem)
 template<class T>
 void TList<T>::DelFirst()
 {
-	if (pFirst == pStop)
+	if (size == 0)
 		throw 0;
 	else
 	{
@@ -331,17 +335,19 @@ void TList<T>::DelFirst()
 		delete pFirst;
 		pFirst = t;
 		size--;
-		if (size == 0)
-			pLast = pStop;
 	}
 }
+
 template <class T>
 void TList<T>::DelCurr()
 {
-	if (pCurr == pStop)
+	if (size == 0 || pCurr == pStop)
 		throw 0;
 	if (pCurr == pFirst)
+	{
 		DelFirst();
+		pCurr = pFirst;
+	}
 	else
 	{
 		pPrev->pNext = pCurr->pNext;
@@ -354,12 +360,20 @@ void TList<T>::DelCurr()
 template<class T>
 void TList<T>::InsCurr(T elem)
 {
-	if (pCurr == pStop)
+	if (size == 0)
+	{
 		InsLast(elem);
+		pPrev = pLast;
+		pCurr = pPrev->pNext;
+	}
 	else
 	{
 		if (pCurr == pFirst)
+		{
 			InsFirst(elem);
+			pPrev = pFirst;
+			pCurr = pPrev->pNext;
+		}
 		else
 		{
 			TLink<T>* t = new TLink<T>;
@@ -372,26 +386,6 @@ void TList<T>::InsCurr(T elem)
 	}
 }
 
-template<class T>
-void TList<T>::Reset()
-{
-	pCurr = pFirst;
-}
-
-template<class T>
-bool TList<T>::IsEnd()
-{
-	if (size != 0) 
-		return pCurr == pStop; 
-	return true;
-}
-
-template<class T>
-void TList<T>::GoNext()
-{
-	pPrev = pCurr;
-	pCurr = pCurr->pNext;
-}
 
 template<class T>
 class THeadList : public TList<T> {
@@ -409,18 +403,41 @@ public:
 };
 
 template<class T>
-THeadList<T>::THeadList() : TList<T>()
+THeadList<T>::THeadList() :TList<T>()
 {
 	pHead = new TLink<T>;
 	TList<T>::pStop = pHead;
 	pHead->pNext = TList<T>::pStop;
+	TList<T>::pFirst = TList<T>::pLast = TList<T>::pCurr = TList<T>::pPrev = TList<T>::pStop;
 }
 
 template<class T>
-THeadList<T>::THeadList(const THeadList<T>& h) :TList<T>(h)
+THeadList<T>::THeadList(const THeadList<T>& h)
 {
 	pHead = new TLink<T>;
-	pHead->pNext = TList<T>::pFirst;
+	TList<T>::pStop = TList<T>::pFirst = TList<T>::pLast = TList<T>::pPrev = TList<T>::pCurr = pHead;
+	pHead->pNext = TList<T>::pStop;
+	if (h.size)
+	{
+		TLink<T>* prev = new TLink<T>;
+		pHead->pNext = prev;
+		TList<T>::pFirst = prev;
+		TList<T>::pFirst->val = h.pFirst->val;
+		TList<T>::pFirst->pNext = TList<T>::pStop;
+		TLink<T>* curr = h.pFirst->pNext;
+		while (curr != h.pStop)
+		{
+			TLink<T>* t = new TLink<T>;
+			t->val = curr->val;
+			t->pNext = TList<T>::pStop;
+			prev->pNext = t;
+			prev = t;
+			curr = curr->pNext;
+		}
+		TList<T>::pLast = prev;
+	}
+	TList<T>::size = h.size;
+	TList<T>::pos = 0;
 }
 
 template<class T>
@@ -447,21 +464,15 @@ void THeadList<T>::DelFirst()
 template<class T>
 void THeadList<T>::InsLast(T elem)
 {
-	if (TList<T>::size == 0)
-		InsFirst(elem);
-	else
-		TList<T>::InsLast(elem);
+	TList<T>::InsLast(elem);
+	pHead->pNext = TList<T>::pFirst;
 }
 
 template<class T>
 void THeadList<T>::InsCurr(T elem)
 {
-	if (TList<T>::size == 0)
-	{
-		InsFirst(elem);
-	}
-	else
-		TList<T>::InsCurr(elem);
+	TList<T>::InsCurr(elem);
+	pHead->pNext = TList<T>::pFirst;
 }
 
 template <class T>
@@ -481,9 +492,10 @@ public:
 	TPolinom operator + (const TPolinom& p);
 	TPolinom operator * (const double val);
 	TPolinom operator * (const TMonom& m);
+
 	friend std::istream& operator >> (std::istream& in, TPolinom& p)
 	{
-		std::cout << "size=";
+		std::cout << "размер=";
 		int t;
 		in >> t;
 		if (t < 0)
@@ -503,10 +515,11 @@ public:
 			out << p.pCurr->val << ' ';
 		}
 		if (!p.size)
-			out << "Polinom empty";
+			out << "Полином пуст";
 		return out;
 	}
 };
+
 TPolinom::TPolinom() :THeadList<TMonom>()
 {
 	TMonom tmp;
@@ -514,10 +527,12 @@ TPolinom::TPolinom() :THeadList<TMonom>()
 	tmp.coeff = 0.0;
 	pHead->val = tmp;
 }
+
 TPolinom::TPolinom(const TPolinom& p) : THeadList<TMonom>(p)
 {
 	pHead->val = p.pHead->val;
 }
+
 void TPolinom::InsMonom(const TMonom& m)
 {
 	Reset();
@@ -539,6 +554,7 @@ void TPolinom::InsMonom(const TMonom& m)
 		GoNext();
 	}
 }
+
 TPolinom& TPolinom::operator+=(const TPolinom& p)
 {
 	Reset();
@@ -568,6 +584,7 @@ TPolinom& TPolinom::operator+=(const TPolinom& p)
 	}
 	return *this;
 }
+
 TPolinom TPolinom::operator + (const TPolinom& p)
 {
 	TPolinom res(*this);
@@ -602,6 +619,7 @@ TPolinom TPolinom::operator + (const TPolinom& p)
 	}
 	return res;
 }
+
 TPolinom TPolinom:: operator*(const double val)
 {
 	if (val == 0.0)
@@ -617,6 +635,7 @@ TPolinom TPolinom:: operator*(const double val)
 		return res;
 	}
 }
+
 TPolinom TPolinom::operator*(const TMonom& m)
 {
 	if (m.coeff == 0.0)
@@ -632,7 +651,6 @@ TPolinom TPolinom::operator*(const TMonom& m)
 		return res;
 	}
 }
-
 
 TPolinom& TPolinom:: operator=(const TPolinom& p)
 {
