@@ -12,11 +12,13 @@ struct TMonom
 {
 	double coeff;
 	int x, y, z;
-	TMonom();
+	TMonom(int x_ = 0, int y_ = 0, int z_ = 0, double coeff_ = 1.0);
 	bool operator < (const TMonom& m)const;
 	bool operator == (const TMonom& m)const;
 	bool operator >(const TMonom& m)const;
 	TMonom& operator =(const TMonom& m);
+	TMonom operator *(const TMonom& m);
+	TMonom operator *(const double alpha);
 	friend std::istream& operator>>(std::istream& in, TMonom& m)
 	{
 		std::string res;
@@ -48,7 +50,7 @@ struct TMonom
 				if (i == 0)
 				{
 					std::string tmp;
-					int j;
+					unsigned int j;
 					for (j = 0; j < res.size(); j++)
 					{
 						if (res[j] == 'x' || res[j] == 'y' || res[j] == 'z')
@@ -56,79 +58,65 @@ struct TMonom
 						tmp += res[j];
 					}
 					i = j - 1;
-					m.coeff = std::stod(tmp);
+					if (tmp == "-")
+						m.coeff = -1;
+					else
+						m.coeff = std::stod(tmp);
 				}
 		}
 		return in;
 	}
+
 	friend std::ostream& operator << (std::ostream& out, const TMonom& m)
 	{
-		if (m.coeff != 1.0)
-			out << m.coeff;
 		if (m.x + m.y + m.z)
 		{
-			if (m.coeff != 1.0 && m.x)
+			if (m.coeff != 1.0)
+			{
+				if (m.coeff != -1.0)
+					out << m.coeff;
+				else
+					out << '-';
+			}
+			if (m.coeff != 1.0 && m.coeff != -1.0 && m.x)
 				out << '*';
 			out << m.print('x', m.x);
-			if (m.y)
+			if (m.x && m.y)
 				out << '*';
 			out << m.print('y', m.y);
-			if (m.z)
+			if (m.x && m.y && m.z)
 				out << '*';
 			out << m.print('z', m.z);
 		}
+		else
+			out << m.coeff;
 		return out;
 	}
 	std::string print(char p, int pow) const;
 	void input(char p, int val);
 };
 
-TMonom::TMonom()
+TMonom::TMonom(int x_, int y_, int z_, double coeff_)
 {
-	x = y = z = 0;
-	coeff = 1.0;
-} 
-
-bool TMonom::operator <(const TMonom& m)const
-{
-	int sum = x + y + z;
-	int sum_m = m.x + m.y + m.z;
-	return (sum < sum_m) ? true : false;
-}
-
-bool TMonom::operator >(const TMonom& m) const
-{
-	int sum = x + y + z;
-	int sum_m = m.x + m.y + m.z;
-	return (sum > sum_m) ? true : false;
-}
-
-bool TMonom::operator == (const TMonom& m) const
-{
-	return x == m.x && y == m.y && z == m.z;
-}
-
-TMonom& TMonom::operator =(const TMonom& m)
-{
-	coeff = m.coeff;
-	x = m.x;
-	y = m.y;
-	z = m.z;
-	return *this;
+	x = x_;
+	y = y_;
+	z = z_;
+	coeff = coeff_;
 }
 
 void TMonom::input(char p, int val)
 {
 	switch (p)
 	{
-	case 'x': x = val;
+	case 'x':x = val;
 		break;
-	case 'y': y = val;
+	case'y':y = val;
 		break;
-	case 'z': z = val;
+	case'z':z = val;
 		break;
 	}
 }
+
 std::string TMonom::print(char p, int pow) const
 {
 	std::string res = "";
@@ -148,7 +136,50 @@ std::string TMonom::print(char p, int pow) const
 	return res;
 }
 
+bool TMonom::operator <(const TMonom& m) const
+{
+	int sum = x + y + z;
+	int sum_m = m.x + m.y + m.z;
+	return sum < sum_m;
+}
 
+bool TMonom::operator >(const TMonom& m) const
+{
+	int sum = x + y + z;
+	int sum_m = m.x + m.y + m.z;
+	return sum > sum_m;
+}
+
+bool TMonom::operator == (const TMonom& m) const
+{
+	return x == m.x && y == m.y && z == m.z;
+}
+
+TMonom& TMonom::operator =(const TMonom& m)
+{
+	coeff = m.coeff;
+	x = m.x;
+	y = m.y;
+	z = m.z;
+	return *this;
+}
+
+TMonom TMonom:: operator *(const TMonom& m)
+{
+	TMonom res;
+	res.x = x + m.x;
+	res.y = y + m.y;
+	res.z = z + m.z;;
+	res.coeff = coeff * m.coeff;
+	return res;
+}
+
+TMonom TMonom:: operator *(const double a)
+{
+	TMonom res(this->x, this->y, this->z, this->coeff);
+	res.coeff *= a;
+	return res;
+}
 
 template <class T>
 class TList {
@@ -167,6 +198,7 @@ public:
 	void Reset();
 	bool IsEnd();
 	void GoNext();
+	int Get_Size()const { return size; }
 	friend std::istream& operator >> (std::istream& in, TList<T>& list)
 	{
 		std::cout << "size= ";
@@ -373,6 +405,7 @@ public:
 	void DelFirst();
 	void InsLast(T elem);
 	void InsCurr(T elem);
+	void DelCurr();
 };
 
 template<class T>
@@ -431,12 +464,23 @@ void THeadList<T>::InsCurr(T elem)
 		TList<T>::InsCurr(elem);
 }
 
+template <class T>
+void THeadList<T>::DelCurr()
+{
+	TList<T>::DelCurr();
+	pHead->pNext = TList<T>::pFirst;
+}
+
 class TPolinom :public THeadList<TMonom> {
 public:
 	TPolinom();
 	TPolinom(const TPolinom& p);
 	void InsMonom(const TMonom& m);
-	TPolinom& operator += (TPolinom& p);
+	TPolinom& operator=(const TPolinom& p);
+	TPolinom& operator += (const TPolinom& p);
+	TPolinom operator + (const TPolinom& p);
+	TPolinom operator * (const double val);
+	TPolinom operator * (const TMonom& m);
 	friend std::istream& operator >> (std::istream& in, TPolinom& p)
 	{
 		std::cout << "size=";
@@ -452,8 +496,17 @@ public:
 		}
 		return in;
 	}
+	friend std::ostream& operator << (std::ostream& out, TPolinom& p)
+	{
+		for (p.Reset(); !p.IsEnd(); p.GoNext())
+		{
+			out << p.pCurr->val << ' ';
+		}
+		if (!p.size)
+			out << "Polinom empty";
+		return out;
+	}
 };
-
 TPolinom::TPolinom() :THeadList<TMonom>()
 {
 	TMonom tmp;
@@ -461,15 +514,14 @@ TPolinom::TPolinom() :THeadList<TMonom>()
 	tmp.coeff = 0.0;
 	pHead->val = tmp;
 }
-
 TPolinom::TPolinom(const TPolinom& p) : THeadList<TMonom>(p)
 {
 	pHead->val = p.pHead->val;
 }
-
 void TPolinom::InsMonom(const TMonom& m)
 {
-	for (Reset(); !IsEnd(); GoNext())
+	Reset();
+	while (true)
 	{
 		if (pCurr->val < m)
 		{
@@ -484,42 +536,160 @@ void TPolinom::InsMonom(const TMonom& m)
 				DelCurr();
 			break;
 		}
+		GoNext();
 	}
-	if (IsEnd())
-		InsLast(m);
 }
-
-TPolinom& TPolinom::operator+=(TPolinom& p)
+TPolinom& TPolinom::operator+=(const TPolinom& p)
 {
-	p.Reset();
-	for (Reset(); !IsEnd(); GoNext())
+	Reset();
+	TLink<TMonom>* curr = p.pFirst;
+	while (curr != p.pStop)
 	{
-		if (pCurr->val < p.pCurr->val)
+		if (pCurr->val < curr->val)
 		{
-			InsCurr(p.pCurr->val);
-			p.GoNext();
-			if (p.IsEnd())
-				break;
+			InsCurr(curr->val);
+			curr = curr->pNext;
 		}
-		if (p.pCurr->val == pCurr->val)
+		else
 		{
-			double tmp = p.pCurr->val.coeff + pCurr->val.coeff;
-			if (tmp)
+			if (pCurr->val == curr->val)
+			{
+				double tmp = pCurr->val.coeff + curr->val.coeff;
 				pCurr->val.coeff = tmp;
+				if (tmp)
+					GoNext();
+				else
+					DelCurr();
+				curr = curr->pNext;
+			}
+			else
+				GoNext();
+		}
+	}
+	return *this;
+}
+TPolinom TPolinom::operator + (const TPolinom& p)
+{
+	TPolinom res(*this);
+	res.Reset();
+	TLink<TMonom>* curr = p.pFirst;
+	while (curr != p.pStop)
+	{
+		if (res.pCurr->val < curr->val)
+		{
+			res.InsCurr(curr->val);
+			curr = curr->pNext;
+		}
+		else
+		{
+			if (res.pCurr->val == curr->val)
+			{
+				double tmp = res.pCurr->val.coeff + curr->val.coeff;
+				if (tmp)
+				{
+					res.pCurr->val.coeff = tmp;
+					res.GoNext();
+				}
+				else
+					res.DelCurr();
+				curr = curr->pNext;
+			}
 			else
 			{
-				DelCurr();
+				res.GoNext();
 			}
-			p.GoNext();
-			if (IsEnd())
-				break;
 		}
 	}
-	while (!p.IsEnd())
+	return res;
+}
+TPolinom TPolinom:: operator*(const double val)
+{
+	if (val == 0.0)
 	{
-		InsLast(p.pCurr->val);
-		p.GoNext();
-
+		TPolinom res;
+		return res;
 	}
+	else
+	{
+		TPolinom res(*this);
+		for (res.Reset(); !res.IsEnd(); res.GoNext())
+			res.pCurr->val.coeff *= val;
+		return res;
+	}
+}
+TPolinom TPolinom::operator*(const TMonom& m)
+{
+	if (m.coeff == 0.0)
+	{
+		TPolinom res;
+		return res;
+	}
+	else
+	{
+		TPolinom res(*this);
+		for (res.Reset(); !res.IsEnd(); res.GoNext())
+			res.pCurr->val = res.pCurr->val * m;
+		return res;
+	}
+}
+
+
+TPolinom& TPolinom:: operator=(const TPolinom& p)
+{
+	if (this != &p)
+	{
+		if (!p.size)
+		{
+			TList<TMonom>::~TList();
+		}
+		else
+		{
+			if (size < p.size)
+			{
+				int tmp = p.size - size;
+				TLink<TMonom>* curr = pLast;
+				for (int i = 0; i < tmp; i++)
+				{
+					TLink<TMonom>* new_elem = new TLink<TMonom>;
+					curr->pNext = new_elem;
+					curr = new_elem;
+					curr->pNext = pStop;
+				}
+				pFirst = pHead->pNext;
+				pLast = curr;
+				curr = p.pFirst;
+				for (Reset(); !IsEnd(); GoNext())
+				{
+					pCurr->val = curr->val;
+					curr = curr->pNext;
+				}
+			}
+			else
+			{
+				TLink<TMonom>* curr = p.pFirst;
+				Reset();
+				while (true)
+				{
+					pCurr->val = curr->val;
+					curr = curr->pNext;
+					if (curr == p.pStop)
+						break;
+					GoNext();
+				}
+				pLast = pCurr;
+				GoNext();
+				while (!IsEnd())
+				{
+					TLink<TMonom>* t = pCurr;
+					GoNext();
+					delete t;
+				}
+				pLast->pNext = pStop;
+				pPrev = pLast;
+			}
+		}
+	}
+	size = p.size;
+	pos = 0;
 	return *this;
 }
